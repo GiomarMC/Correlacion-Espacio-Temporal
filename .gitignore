@@ -1,0 +1,11 @@
+# Entornos e intermedios
+.venv/
+__pycache__/
+*.pyc
+
+# Datos (todo se regenera con: python src/20_preparar_dengue.py)
+#   descarga OpenDengue + GADM y reconstruye el panel, la geometría y la matriz W
+datos_dengue/
+
+# Resultados (se regeneran con: python src/21_... y python src/22_...)
+resultados_dengue/

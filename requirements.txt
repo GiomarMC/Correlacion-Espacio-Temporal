@@ -1,0 +1,11 @@
+# Correlación Cruzada Espacial con Retardo Temporal — Difusión del dengue en el Perú
+# Entorno probado: Python 3.13
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+numpy>=2.0
+pandas>=2.0
+matplotlib>=3.8
+requests>=2.30
+shapely>=2.0
+geopandas>=1.0
+libpysal>=4.9
