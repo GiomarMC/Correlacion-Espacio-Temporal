@@ -9,3 +9,10 @@ datos_dengue/
 
 # Resultados (se regeneran con: python src/21_... y python src/22_...)
 resultados_dengue/
+
+# Caso de contraste (socioeconómico). Solo se versiona el CSV de indicadores del INEI,
+# que no es descargable por script; el resto lo regenera src/01_construir_matriz_W.py
+# (geometría + matriz W) y src/02_correlacion_cruzada_moran.py (resultados/).
+datos_consolidados/*
+!datos_consolidados/analisis_tecnologia_educacion.csv
+resultados/

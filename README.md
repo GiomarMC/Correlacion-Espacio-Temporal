@@ -3,7 +3,7 @@
 Trabajo de Investigación Formativa (TIF) — Análisis Exploratorio de Datos Espaciales (AEDE),
 Escuela Profesional de Ciencia de la Computación, Universidad Nacional de San Agustín de Arequipa.
 
-Este repositorio contiene el **código, los datos procesados y los resultados** del análisis de la
+Este repositorio contiene el **código y la documentación** del análisis de la
 difusión espacio-temporal del dengue entre las provincias del Perú mediante el **Índice Cruzado de
 Moran con retardo temporal**.
 
@@ -54,10 +54,27 @@ python src/21_moran_cruzado_dengue.py
 python src/22_visualizacion_difusion.py
 ```
 
-El repositorio contiene **solo el código y la documentación** (lo esencial para replicar). Los datos y
-los resultados **no se versionan** porque se regeneran por completo con los scripts: ejecuta el paso 1
-(descarga OpenDengue + GADM y reconstruye `datos_dengue/`) y luego los pasos 2 y 3
-(reconstruyen `resultados_dengue/`). Requiere conexión a internet en el paso 1.
+### Caso de contraste (validación del método)
+
+Para reproducir la validación metodológica —el mismo método aplicado a indicadores
+socioeconómicos, que **no** se difunden— se ejecuta además:
+
+```bash
+# 4) Matriz W de los 24 departamentos (descarga la geometría GADM nivel 1 si falta).
+python src/01_construir_matriz_W.py
+
+# 5) Moran global, LISA y Moran cruzado 2007→2017 sobre los indicadores del INEI.
+python src/02_correlacion_cruzada_moran.py
+
+# 6) Figura comparativa dengue (difusión) vs socioeconómico (heterogeneidad).
+python src/23_contraste.py
+```
+
+El repositorio contiene **solo lo esencial para replicar**: el código, la documentación y un único
+archivo de datos (`datos_consolidados/analisis_tecnologia_educacion.csv`, los indicadores del INEI del
+caso de contraste, que no son descargables por script). Todo lo demás **no se versiona** porque se
+regenera con los scripts: los pasos 1 y 4 descargan OpenDengue y GADM, y los pasos 2, 3, 5 y 6
+reconstruyen `resultados_dengue/` y `resultados/`. Requiere conexión a internet en los pasos 1 y 4.
 
 ## Estructura
 
@@ -65,13 +82,20 @@ los resultados **no se versionan** porque se regeneran por completo con los scri
 src/
   depuru.py                    # utilidades: normalización de nombres, adyacencia de referencia
   aede.py                      # núcleo estadístico (Moran, estandarización, permutación)
+  # --- caso principal: dengue ---
   20_preparar_dengue.py        # ETL: descarga OpenDengue + GADM -> panel + W
   21_moran_cruzado_dengue.py   # Índice Cruzado de Moran con retardo + LISA
   22_visualizacion_difusion.py # visualizaciones de difusión espacio-temporal
+  # --- caso de contraste: socioeconómico ---
+  01_construir_matriz_W.py     # matriz W Queen de los 24 departamentos
+  02_correlacion_cruzada_moran.py  # Moran global, LISA y cruzado 2007->2017
+  23_contraste.py              # figura comparativa difusión vs heterogeneidad
+datos_consolidados/
+  analisis_tecnologia_educacion.csv  # indicadores INEI 2007/2017 (único dato versionado)
 DATASET.md                     # diccionario de datos y proceso de normalización
 LICENSE-datos.md               # licencias de OpenDengue y GADM
 requirements.txt
-# (datos_dengue/ y resultados_dengue/ se generan al correr los scripts; no versionados)
+# (datos_dengue/, resultados_dengue/ y resultados/ se generan al correr los scripts)
 ```
 
 ## Datos y licencia
