@@ -3,12 +3,14 @@ depuru.py — Utilidades compartidas del TIF (Correlación Cruzada Espacial con 
 
 Contiene la definición canónica de los 24 departamentos del Perú usados como unidades
 espaciales del estudio (Ubigeo 01–25, excluyendo Callao=07; Lima como registro único),
-funciones de normalización de nombres y la lista de adyacencia de fronteras verificada a
-mano, que se usa como validación y como respaldo (fallback) si falla la descarga de la
-geometría oficial.
+funciones de normalización de nombres, la lista de adyacencia de fronteras verificada a
+mano (que se usa como validación y como respaldo (fallback) si falla la descarga de la
+geometría oficial) y la comprobación de archivos de entrada que comparten los scripts.
 """
 from __future__ import annotations
 
+import os
+import sys
 import unicodedata
 
 # ---------------------------------------------------------------------------
@@ -112,3 +114,55 @@ def adyacencia_a_matriz(ady: dict[str, list[str]]):
     if not np.array_equal(A, A.T):
         raise ValueError("La lista de adyacencia verificada NO es simétrica.")
     return A
+
+
+# ---------------------------------------------------------------------------
+# Salida por consola. Los scripts imprimen acentos y símbolos ("→" en las
+# etiquetas de los emparejamientos, "≈", …). Cuando la salida se redirige a un
+# archivo o a una tubería, Python usa la codificación local, que en Windows suele
+# ser cp1252 y no puede representarlos: el script muere con UnicodeEncodeError
+# DESPUÉS de haber hecho todo el cálculo. Forzar UTF-8 lo evita.
+# ---------------------------------------------------------------------------
+def salida_utf8() -> None:
+    """Fuerza UTF-8 en stdout/stderr para que imprimir símbolos no aborte el
+    script en consolas o redirecciones con codificación limitada."""
+    for flujo in (sys.stdout, sys.stderr):
+        try:
+            flujo.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass  # flujo no reconfigurable (p.ej. sustituido en un test)
+
+
+# ---------------------------------------------------------------------------
+# Comprobación de insumos. Los scripts del pipeline dependen unos de otros: casi
+# ningún archivo de datos se versiona, se regenera al ejecutarlos en orden. Sin
+# esta comprobación, saltarse un paso produce un FileNotFoundError de pandas que
+# no dice cuál es el script que faltaba ejecutar.
+# ---------------------------------------------------------------------------
+def exigir(requisitos: dict[str, str]) -> None:
+    """Aborta con un mensaje accionable si falta algún archivo de entrada.
+
+    'requisitos' mapea ruta del archivo -> comando que lo genera. Si todos existen
+    no hace nada; si falta alguno, imprime qué falta y cómo obtenerlo, y termina
+    con código 1."""
+    faltan = [(ruta, comando) for ruta, comando in requisitos.items()
+              if not os.path.exists(ruta)]
+    if not faltan:
+        return
+
+    print("", file=sys.stderr)
+    print("=" * 74, file=sys.stderr)
+    print(" FALTAN ARCHIVOS DE ENTRADA: hay que ejecutar antes otro script", file=sys.stderr)
+    print("=" * 74, file=sys.stderr)
+    for ruta, comando in faltan:
+        try:
+            visible = os.path.relpath(ruta)
+        except ValueError:  # rutas en volúmenes distintos (Windows)
+            visible = ruta
+        print(f"  no existe : {visible}", file=sys.stderr)
+        print(f"  lo genera : {comando}", file=sys.stderr)
+    print("-" * 74, file=sys.stderr)
+    print(" Ejecuta el/los comando(s) de arriba y vuelve a intentarlo.", file=sys.stderr)
+    print(" El orden completo del pipeline está en el README.", file=sys.stderr)
+    print("=" * 74, file=sys.stderr)
+    raise SystemExit(1)

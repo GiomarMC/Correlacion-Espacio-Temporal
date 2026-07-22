@@ -39,6 +39,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import depuru as d  # noqa: E402  (reutilizamos exigir())
 
 
 def etiquetar_provincias(ax, g, valores, n=8):
@@ -109,6 +110,11 @@ def permutar(Z, W, ii, jj, obs, seed, M=N_PERM):
 
 def main():
     global EI
+    d.salida_utf8()
+    d.exigir({
+        os.path.join(DATOS, "panel_dengue_semanal.csv"): "python src/20_preparar_dengue.py",
+        os.path.join(DATOS, "matriz_W_dengue.csv"): "python src/20_preparar_dengue.py",
+    })
     os.makedirs(FIG, exist_ok=True)
     panel = pd.read_csv(os.path.join(DATOS, "panel_dengue_semanal.csv"),
                         index_col=0, parse_dates=True)

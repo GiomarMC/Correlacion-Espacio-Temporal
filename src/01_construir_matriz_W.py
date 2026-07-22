@@ -156,6 +156,29 @@ def matriz_desde_fallback() -> np.ndarray:
     return d.adyacencia_a_matriz(d.ADYACENCIA_VERIFICADA)
 
 
+def aviso_fallback() -> None:
+    """Advertencia destacada de que W NO proviene de la geometría oficial.
+
+    El respaldo manual difiere de la contigüidad Queen en 3 pares limítrofes (53
+    aristas en vez de 52), lo que desplaza los índices de Moran en la segunda o
+    tercera cifra decimal. Los resultados publicados en el informe se calcularon
+    SIEMPRE con la geometría oficial, así que hay que avisarlo sin ambigüedad."""
+    print("")
+    print("!" * 70)
+    print("!!  ATENCION: matriz W construida con la adyacencia de RESPALDO.")
+    print("!!")
+    print("!!  No se pudo usar la geometría oficial (GADM), así que W proviene de")
+    print("!!  la lista de fronteras escrita a mano en depuru.py. Difiere en 3")
+    print("!!  pares limítrofes: 53 aristas en vez de 52.")
+    print("!!")
+    print("!!  Los indices de Moran que calcule 02_correlacion_cruzada_moran.py")
+    print("!!  NO coincidiran con los publicados en el informe.")
+    print("!!")
+    print("!!  Para reproducir los resultados del informe: comprueba tu conexión")
+    print("!!  a internet y vuelve a ejecutar este script.")
+    print("!" * 70)
+
+
 def comparar_con_verificada(A: np.ndarray) -> None:
     """Reporta diferencias entre la contigüidad derivada y la verificada a mano."""
     Aref = d.adyacencia_a_matriz(d.ADYACENCIA_VERIFICADA)
@@ -179,12 +202,14 @@ def estandarizar_por_filas(A: np.ndarray) -> np.ndarray:
 
 # ---------------------------------------------------------------------------
 def main() -> None:
+    d.salida_utf8()
     os.makedirs(DATOS, exist_ok=True)
     print("=" * 70)
     print(" CONSTRUCCIÓN DE LA MATRIZ DE PESOS ESPACIALES W (Queen, 24 deptos) ")
     print("=" * 70)
 
     gdf = descargar_geometria()
+    uso_fallback = False
     if gdf is not None:
         try:
             gdf = preparar_24_departamentos(gdf)
@@ -195,9 +220,11 @@ def main() -> None:
         except Exception as e:  # noqa: BLE001
             print(f"[geo] Error procesando la geometría ({type(e).__name__}: {e}).")
             A = matriz_desde_fallback()
+            uso_fallback = True
     else:
         print("[geo] No se pudo descargar la geometría oficial.")
         A = matriz_desde_fallback()
+        uso_fallback = True
 
     # Chequeos de integridad
     assert np.array_equal(A, A.T), "La matriz de adyacencia NO es simétrica."
@@ -214,7 +241,7 @@ def main() -> None:
     df_W.to_csv(os.path.join(DATOS, "matriz_W_estandarizada.csv"))
 
     print("-" * 70)
-    print(f"Vecinos por departamento:\n{df_A.sum(1).to_string()}")
+    print(f"Vecinos por departamento:\n{df_A.sum(axis=1).to_string()}")
     print("-" * 70)
     print(f"Total de conexiones (aristas): {int(A.sum() // 2)}")
     print(f"Suma de filas de W (debe ser 1): min={W.sum(1).min():.4f}, max={W.sum(1).max():.4f}")
@@ -222,6 +249,9 @@ def main() -> None:
     print(f"  - {os.path.join(DATOS, 'matriz_adyacencia_queen.csv')}")
     print(f"  - {os.path.join(DATOS, 'matriz_W_estandarizada.csv')}")
     print("=" * 70)
+
+    if uso_fallback:
+        aviso_fallback()
 
 
 if __name__ == "__main__":

@@ -116,6 +116,11 @@ def lisa_cruzado(z_pres, z_pas, W, seed=SEMILLA, M=N_PERM):
 # ---------------------------------------------------------------------------
 def cargar():
     csv = os.path.join(DATOS, "analisis_tecnologia_educacion.csv")
+    d.exigir({
+        os.path.join(DATOS, "matriz_W_estandarizada.csv"):
+            "python src/01_construir_matriz_W.py",
+        csv: "viene con el repositorio (indicadores INEI); recupéralo con 'git checkout'",
+    })
     df = pd.read_csv(csv)
     df["__c"] = df["Departamento"].map(d.a_canonico)
     faltan = set(d.DEPARTAMENTOS) - set(df["__c"])
@@ -184,6 +189,7 @@ def fig_lisa_mapa(clave, etiqueta, cuad, sig, gdf):
 
 # ---------------------------------------------------------------------------
 def main():
+    d.salida_utf8()
     os.makedirs(RES, exist_ok=True)
     os.makedirs(FIG, exist_ok=True)
     df, W = cargar()
@@ -296,7 +302,7 @@ def verificar_con_esda(Z, W):
         if abs(mine - theirs) > 1e-6:
             ok = False
             print(f"[check] DISCREPANCIA en {v}: numpy={mine:.6f} vs esda={theirs:.6f}")
-    print(f"\n[check] Verificación cruzada con esda: {'coincide ✔' if ok else 'REVISAR �’'}")
+    print(f"\n[check] Verificación cruzada con esda: {'coincide' if ok else 'REVISAR'}")
 
 
 if __name__ == "__main__":

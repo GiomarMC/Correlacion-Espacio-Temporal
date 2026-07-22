@@ -33,15 +33,29 @@ contigüidad Queen (fila-estandarizada) y `k` el retardo en semanas.
 > Las tablas y figuras (curva I(k), mapas de focos, secuencia del brote, etc.) se generan al ejecutar
 > los scripts; se guardan en `resultados_dengue/` (no versionado, ver más abajo).
 
-## Instalación
+## Requisitos
+
+- **Python 3.11 o superior.**
+- **Conexión a internet** en los pasos 1 y 4 (descargan OpenDengue y GADM).
+- **~2 GB de RAM libres** y **~500 MB de disco**: el paso 1 descarga un extracto
+  comprimido de 55 MB que se expande a 427 MB, y lo procesa en memoria.
+
+### Instalación
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate          # Windows:  .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+Todos los comandos siguientes asumen el entorno **activado**; si no lo está, usa
+`python3` en lugar de `python` (en Linux y macOS `python` a secas puede no existir).
+
 ## Ejecución
+
+> **El orden importa.** Casi ningún archivo de datos se versiona: cada script
+> consume lo que genera el anterior. Si te saltas un paso, el script te dirá cuál
+> falta y cómo generarlo.
 
 ```bash
 # 1) Descarga OpenDengue + GADM (si faltan) y reconstruye el panel + la matriz W.
@@ -70,11 +84,23 @@ python src/02_correlacion_cruzada_moran.py
 python src/23_contraste.py
 ```
 
+> Los pasos 4 y 5 corresponden a los archivos `01_…` y `02_…`: la numeración de los
+> archivos agrupa por caso de estudio (`0x` socioeconómico, `2x` dengue), no por orden
+> de ejecución. **El paso 4 debe ejecutarse antes que el paso 5.**
+
 El repositorio contiene **solo lo esencial para replicar**: el código, la documentación y un único
 archivo de datos (`datos_consolidados/analisis_tecnologia_educacion.csv`, los indicadores del INEI del
 caso de contraste, que no son descargables por script). Todo lo demás **no se versiona** porque se
 regenera con los scripts: los pasos 1 y 4 descargan OpenDengue y GADM, y los pasos 2, 3, 5 y 6
 reconstruyen `resultados_dengue/` y `resultados/`. Requiere conexión a internet en los pasos 1 y 4.
+
+### Si falla la descarga de la geometría
+
+`01_construir_matriz_W.py` tiene un respaldo: si no puede descargar la geometría oficial,
+construye la matriz W con una lista de fronteras escrita a mano. Es útil para no bloquear
+el pipeline, pero **da 53 aristas en vez de 52 y los índices de Moran no coinciden con los
+publicados**. Cuando eso ocurre el script lo advierte de forma destacada al terminar; en ese
+caso, restablece la conexión y vuelve a ejecutarlo antes de comparar resultados.
 
 ## Estructura
 

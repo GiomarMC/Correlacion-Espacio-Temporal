@@ -16,12 +16,16 @@ Salida: resultados/figuras/contraste_metodo.png
 from __future__ import annotations
 
 import os
+import sys
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import depuru as d  # noqa: E402  (reutilizamos exigir())
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG_RES = os.path.join(RAIZ, "resultados", "figuras")
@@ -38,6 +42,13 @@ def destinos() -> list[str]:
 
 
 def main():
+    d.salida_utf8()
+    d.exigir({
+        os.path.join(RAIZ, "resultados_dengue", "moran_temporal_dengue.csv"):
+            "python src/21_moran_cruzado_dengue.py",
+        os.path.join(RAIZ, "resultados", "resumen_capitulo_iv.csv"):
+            "python src/02_correlacion_cruzada_moran.py",
+    })
     os.makedirs(FIG_RES, exist_ok=True)
 
     den = pd.read_csv(os.path.join(RAIZ, "resultados_dengue", "moran_temporal_dengue.csv"))

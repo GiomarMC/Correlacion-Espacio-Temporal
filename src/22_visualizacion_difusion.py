@@ -30,6 +30,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import depuru as d  # noqa: E402  (reutilizamos exigir())
 from aede import z_espacial_por_periodo  # noqa: E402
 
 
@@ -53,6 +54,11 @@ N_MAPAS = 6               # nº de mapas en la secuencia
 
 
 def cargar():
+    d.exigir({
+        os.path.join(DATOS, "panel_dengue_semanal.csv"): "python src/20_preparar_dengue.py",
+        os.path.join(DATOS, "matriz_W_dengue.csv"): "python src/20_preparar_dengue.py",
+        os.path.join(DATOS, "provincias_dengue.geojson"): "python src/20_preparar_dengue.py",
+    })
     panel = pd.read_csv(os.path.join(DATOS, "panel_dengue_semanal.csv"),
                         index_col=0, parse_dates=True)
     W = pd.read_csv(os.path.join(DATOS, "matriz_W_dengue.csv"), index_col=0)
@@ -225,6 +231,7 @@ def fig_onset_2023(panel, g, prov):
 
 # ---------------------------------------------------------------------------
 def main():
+    d.salida_utf8()
     os.makedirs(FIG, exist_ok=True)
     panel, W, g, prov = cargar()
     print("Generando visualizaciones de difusión espacio-temporal…")

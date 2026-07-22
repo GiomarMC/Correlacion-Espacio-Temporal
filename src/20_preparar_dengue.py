@@ -37,6 +37,12 @@ import depuru as d  # noqa: E402  (reutilizamos normaliza())
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATOS = os.path.join(RAIZ, "datos_dengue")
 
+# Columnas del extracto de OpenDengue que realmente usa el análisis (de las 16 del
+# archivo): país y resoluciones para filtrar, provincia y fecha como unidades, y el
+# conteo de casos como variable de interés. Ver DATASET.md.
+COLUMNAS_USADAS = ["adm_0_name", "adm_2_name", "calendar_start_date",
+                   "dengue_total", "S_res", "T_res"]
+
 # Alias para nombres de provincia que no casan directamente con GADM.
 # clave = nombre normalizado de OpenDengue -> valor = NAME_2 de GADM.
 ALIAS = {
@@ -98,7 +104,30 @@ def asegurar_datos():
         print("[descarga] GADM OK.")
 
 
+def leer_peru_admin2_semanal(ruta: str, filas_por_bloque: int = 250_000):
+    """Extrae del CSV global de OpenDengue las filas de Perú a nivel provincia y
+    semana (30 991 de 2.8 millones).
+
+    El archivo pesa 427 MB y cargarlo entero exige ~1.6 GB de RAM, más de lo que
+    tiene libre un equipo modesto. Se lee por bloques y se descarta cada uno tras
+    quedarse con las filas útiles, de modo que el pico de memoria no depende del
+    tamaño del archivo. También se leen solo las 6 columnas que usa el análisis."""
+    trozos = []
+    for bloque in pd.read_csv(ruta, usecols=COLUMNAS_USADAS,
+                              chunksize=filas_por_bloque, low_memory=False):
+        util = bloque[(bloque.adm_0_name.str.upper() == "PERU")
+                      & (bloque.S_res == "Admin2")
+                      & (bloque.T_res == "Week")]
+        if len(util):
+            trozos.append(util.copy())
+    if not trozos:
+        raise ValueError(f"No se encontraron filas de Perú (Admin2, Week) en {ruta}. "
+                         "¿Se descargó el archivo completo?")
+    return pd.concat(trozos, ignore_index=True)
+
+
 def main():
+    d.salida_utf8()
     import geopandas as gpd
 
     print("=" * 72)
@@ -108,8 +137,7 @@ def main():
     asegurar_datos()
 
     # ---- 1) OpenDengue: Peru, Admin2, semanal ----
-    df = pd.read_csv(os.path.join(DATOS, "spatial_extract_V1_3.csv"), low_memory=False)
-    pe = df[(df.adm_0_name.str.upper() == "PERU") & (df.S_res == "Admin2") & (df.T_res == "Week")].copy()
+    pe = leer_peru_admin2_semanal(os.path.join(DATOS, "spatial_extract_V1_3.csv"))
     pe["semana"] = pd.to_datetime(pe["calendar_start_date"])
     pe["_key"] = pe["adm_2_name"].map(limpia_provincia)
     print(f"[1] OpenDengue Perú Admin2×Week: {len(pe)} filas, "
